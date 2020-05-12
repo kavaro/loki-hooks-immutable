@@ -174,7 +174,7 @@ export function immutable(methods: HookMethods, options: TImmutableOptions): TCr
       }
     })
     const deleted = (doc: any) => deleteEvent && collection.emit(deleteEvent, deepFreeze({ ...doc }))
-    collection.addListener('delete', deleted)
+    collection.addListener('delete', deleted)  
     if (!production) {
       collection.data.forEach(deepFreeze)
     }

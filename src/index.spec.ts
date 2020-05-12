@@ -1,4 +1,5 @@
 import test from 'ava'
+import sinon from 'sinon'
 import Loki from 'lokijs'
 import * as immer from 'immer'
 import { Hooks } from 'member-hooks'
@@ -12,7 +13,7 @@ collectionHooks.register('immutable', immutable)
 
 const HooksLoki = createHooksLoki(dbHooks, collectionHooks)
 
-test('should insert immutable docs', t => {
+test('should make docs immutable, accept immer draft and emit immer patches', t => {
   const db = new HooksLoki('dbname', {
     adapter: new Loki.LokiMemoryAdapter(),
   })
@@ -23,12 +24,12 @@ test('should insert immutable docs', t => {
         patches: true, // when the immer options is set and patches is true, then generate immer patches
         insertEvent: 'inserted', // emit('inserted', doc, immer patches of changes made by app on immer draft)
         updateEvent: 'updated',  // emit('updated', doc, immer patches of changes made by app on immer draft)
-        removeEvent: 'deleted',  // emit('deleted', doc)
+        deleteEvent: 'deleted',  // emit('deleted', doc)
         production: false // when set to true, collection documents will not be frozen
       }]]
     }
   })
-  collection.addListener('inserted', (doc: any, patches: any) => {
+  const insertedSpy = sinon.spy((doc: any, patches: any) => {
     t.assert(Object.isFrozen(doc))
     t.deepEqual(patches, {
       "patches": [
@@ -50,7 +51,8 @@ test('should insert immutable docs', t => {
       ]
     })
   })
-  collection.addListener('updated', (doc: any, patches: any) => {
+  collection.addListener('inserted', insertedSpy)
+  const updatedSpy = sinon.spy((doc: any, patches: any) => {
     t.assert(Object.isFrozen(doc))
     t.deepEqual(patches, {
       "patches": [
@@ -72,16 +74,21 @@ test('should insert immutable docs', t => {
       ]
     })
   })
-  collection.addListener('deleted', (doc: any) => {
+  collection.addListener('updated', updatedSpy)
+  const deletedSpy = sinon.spy((doc: any) => {
     t.assert(Object.isFrozen(doc))
   })
+  collection.addListener('deleted', deletedSpy)
   t.assert(Object.isFrozen(collection.insert({ id: 'id1' }))) // emits 'inserted' event
+  t.assert(insertedSpy.calledOnce)
   const inserted = collection.get(1)
   t.assert(Object.isFrozen(inserted))
   const draft = immer.createDraft(inserted)
   draft.name = 'name1'
   collection.update(draft) // emits 'updated' event
+  t.assert(updatedSpy.calledOnce)
   const updated = collection.get(1)
   t.assert(Object.isFrozen(updated))
   collection.remove(1) // emits 'deleted' event
+  t.assert(deletedSpy.calledOnce)
 })
