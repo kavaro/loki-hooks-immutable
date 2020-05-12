@@ -1,0 +1,246 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>loki-hooks-immutable</title>
+	<meta name="description" content="Documentation for loki-hooks-immutable">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.json" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">loki-hooks-immutable</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+							<input type="checkbox" id="tsd-filter-only-exported" />
+							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="globals.html">Globals</a>
+				</li>
+			</ul>
+			<h1>loki-hooks-immutable</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<a href="#loki-hooks-immutable" id="loki-hooks-immutable" style="color: inherit; text-decoration: none;">
+					<h1>loki-hooks-immutable</h1>
+				</a>
+				<p>A loki-hooks factory function that turns a loki collection into a collection with immutable documents.
+					Quering the collection will return immutable documents. Insert/update and remove return immutable documents.
+					When the immer and patches options are enabled, then the insert and update methods accept immer drafts (created
+					with createDraft) as input. The insert and update methods will then emit insertEvent/updateEvent events with the
+				document and the immer patches as arguments.</p>
+				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
+					<h1>Usage</h1>
+				</a>
+				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> test <span class="hljs-keyword">from</span> <span class="hljs-string">'ava'</span>
+<span class="hljs-keyword">import</span> Loki <span class="hljs-keyword">from</span> <span class="hljs-string">'lokijs'</span>
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> immer <span class="hljs-keyword">from</span> <span class="hljs-string">'immer'</span>
+<span class="hljs-keyword">import</span> { Hooks } <span class="hljs-keyword">from</span> <span class="hljs-string">'member-hooks'</span>
+<span class="hljs-keyword">import</span> { createHooksLoki } <span class="hljs-keyword">from</span> <span class="hljs-string">'loki-hooks'</span>
+<span class="hljs-keyword">import</span> { immutable } <span class="hljs-keyword">from</span> <span class="hljs-string">'.'</span>
+
+
+<span class="hljs-keyword">const</span> dbHooks = <span class="hljs-keyword">new</span> Hooks()
+<span class="hljs-keyword">const</span> collectionHooks = <span class="hljs-keyword">new</span> Hooks()
+collectionHooks.register(<span class="hljs-string">'immutable'</span>, immutable)
+
+<span class="hljs-keyword">const</span> HooksLoki = createHooksLoki(dbHooks, collectionHooks)
+
+test(<span class="hljs-string">'should insert immutable docs'</span>, <span class="hljs-function"><span class="hljs-params">t</span> =&gt;</span> {
+  <span class="hljs-keyword">const</span> db = <span class="hljs-keyword">new</span> HooksLoki(<span class="hljs-string">'dbname'</span>, {
+    adapter: <span class="hljs-keyword">new</span> Loki.LokiMemoryAdapter(),
+  })
+  <span class="hljs-keyword">const</span> collection = db.addCollection(<span class="hljs-string">'collection'</span>, {
+    hooks: {
+      config: [
+        [
+          <span class="hljs-string">'immutable'</span>, <span class="hljs-comment">// name used to register the immutable hook factory function (see above)</span>
+          {
+            immer, <span class="hljs-comment">// when set, inserted/updated documents can be immer drafts</span>
+            patches: <span class="hljs-literal">true</span>, <span class="hljs-comment">// when the immer options is set and patches is true, then immer patches are emitted</span>
+            insertEvent: <span class="hljs-string">'inserted'</span>, <span class="hljs-comment">// emit('inserted', doc, patches)</span>
+            updateEvent: <span class="hljs-string">'updated'</span>,  <span class="hljs-comment">// emit('updated', doc, patches)</span>
+            removeEvent: <span class="hljs-string">'deleted'</span>,  <span class="hljs-comment">// emit('deleted', doc)</span>
+            production: <span class="hljs-literal">false</span> <span class="hljs-comment">// when set to true, collection documents will not be frozen</span>
+          }
+        ]
+      ]
+    }
+  })
+  collection.addListener(<span class="hljs-string">'inserted'</span>, <span class="hljs-function">(<span class="hljs-params">doc: <span class="hljs-built_in">any</span>, patches: <span class="hljs-built_in">any</span></span>) =&gt;</span> {
+    t.assert(<span class="hljs-built_in">Object</span>.isFrozen(doc))
+    t.deepEqual(patches, {
+      <span class="hljs-string">"patches"</span>: [
+        {
+          <span class="hljs-string">"op"</span>: <span class="hljs-string">"add"</span>,
+          <span class="hljs-string">"path"</span>: [
+            <span class="hljs-string">"id"</span>
+          ],
+          <span class="hljs-string">"value"</span>: <span class="hljs-string">"id1"</span>
+        }
+      ],
+      <span class="hljs-string">"reversePatches"</span>: [
+        {
+          <span class="hljs-string">"op"</span>: <span class="hljs-string">"remove"</span>,
+          <span class="hljs-string">"path"</span>: [
+            <span class="hljs-string">"id"</span>
+          ]
+        }
+      ]
+    })
+  })
+  collection.addListener(<span class="hljs-string">'updated'</span>, <span class="hljs-function">(<span class="hljs-params">doc: <span class="hljs-built_in">any</span>, patches: <span class="hljs-built_in">any</span></span>) =&gt;</span> {
+    t.assert(<span class="hljs-built_in">Object</span>.isFrozen(doc))
+    t.deepEqual(patches, {
+      <span class="hljs-string">"patches"</span>: [
+        {
+          <span class="hljs-string">"op"</span>: <span class="hljs-string">"add"</span>,
+          <span class="hljs-string">"path"</span>: [
+            <span class="hljs-string">"name"</span>
+          ],
+          <span class="hljs-string">"value"</span>: <span class="hljs-string">"name1"</span>
+        }
+      ],
+      <span class="hljs-string">"reversePatches"</span>: [
+        {
+          <span class="hljs-string">"op"</span>: <span class="hljs-string">"remove"</span>,
+          <span class="hljs-string">"path"</span>: [
+            <span class="hljs-string">"name"</span>
+          ]
+        }
+      ]
+    })
+  })
+  collection.addListener(<span class="hljs-string">'deleted'</span>, <span class="hljs-function">(<span class="hljs-params">doc: <span class="hljs-built_in">any</span></span>) =&gt;</span> {
+    t.assert(<span class="hljs-built_in">Object</span>.isFrozen(doc))
+  })
+  t.assert(<span class="hljs-built_in">Object</span>.isFrozen(collection.insert({ id: <span class="hljs-string">'id1'</span> }))) <span class="hljs-comment">// emits 'inserted' event</span>
+  <span class="hljs-keyword">const</span> inserted = collection.get(<span class="hljs-number">1</span>)
+  t.assert(<span class="hljs-built_in">Object</span>.isFrozen(inserted))
+  <span class="hljs-keyword">const</span> draft = immer.createDraft(inserted)
+  draft.name = <span class="hljs-string">'name1'</span>
+  collection.update(draft) <span class="hljs-comment">// emits 'updated' event</span>
+  <span class="hljs-keyword">const</span> updated = collection.get(<span class="hljs-number">1</span>)
+  t.assert(<span class="hljs-built_in">Object</span>.isFrozen(updated))
+  collection.remove(<span class="hljs-number">1</span>) <span class="hljs-comment">// emits 'deleted' event</span>
+})</code></pre>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="globals.html"><em>Globals</em></a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/tcollectionchange.html" class="tsd-kind-icon">TCollection<wbr>Change</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/timmer.html" class="tsd-kind-icon">TImmer</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/timmutableoptions.html" class="tsd-kind-icon">TImmutable<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/tpatch.html" class="tsd-kind-icon">TPatch</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/tpatchreversepatch.html" class="tsd-kind-icon">TPatch<wbr>Reverse<wbr>Patch</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#tpatchescallback" class="tsd-kind-icon">TPatches<wbr>Callback</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#hooksloki" class="tsd-kind-icon">Hooks<wbr>Loki</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#collectionhooks" class="tsd-kind-icon">collection<wbr>Hooks</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#dbhooks" class="tsd-kind-icon">db<wbr>Hooks</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#isarray" class="tsd-kind-icon">is<wbr>Array</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#immutable" class="tsd-kind-icon">immutable</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#load" class="tsd-kind-icon">load</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#save" class="tsd-kind-icon">save</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#withoutmeta" class="tsd-kind-icon">without<wbr>Meta</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>
