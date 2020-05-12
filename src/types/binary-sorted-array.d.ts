@@ -1,0 +1,1 @@
+import 'member-hooks/build/module/types/binary-sorted-array'

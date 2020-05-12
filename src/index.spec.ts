@@ -1,14 +1,3 @@
-# loki-hooks-immutable
-
-A loki-hooks factory function that turns a loki collection into a collection with immutable documents.
-Quering the collection will return immutable documents. Insert/update and remove return immutable documents.
-When the immer and patches options are enabled, then the insert and update methods accept immer drafts (created
-with createDraft) as input. The insert and update methods will then emit insertEvent/updateEvent events with the 
-document and the immer patches as arguments.
-
-# Usage
-
-```typescript
 import test from 'ava'
 import Loki from 'lokijs'
 import * as immer from 'immer'
@@ -29,19 +18,14 @@ test('should insert immutable docs', t => {
   })
   const collection = db.addCollection('collection', {
     hooks: {
-      config: [
-        [
-          'immutable', // name used to register the immutable hook factory function (see above)
-          {
-            immer, // when set, inserted/updated documents can be immer drafts
-            patches: true, // when the immer options is set and patches is true, then immer patches are emitted
-            insertEvent: 'inserted', // emit('inserted', doc, patches)
-            updateEvent: 'updated',  // emit('updated', doc, patches)
-            removeEvent: 'deleted',  // emit('deleted', doc)
-            production: false // when set to true, collection documents will not be frozen
-          }
-        ]
-      ]
+      config: [['immutable', {
+        immer, // when set, document can be inserted and updated with an immer draft
+        patches: true, // when the immer options is set and patches is true, then generate immer patches
+        insertEvent: 'inserted', // emit('inserted', doc, immer patches of changes made by app on immer draft)
+        updateEvent: 'updated',  // emit('updated', doc, immer patches of changes made by app on immer draft)
+        removeEvent: 'deleted',  // emit('deleted', doc)
+        production: false // when set to true, collection documents will not be frozen
+      }]]
     }
   })
   collection.addListener('inserted', (doc: any, patches: any) => {
@@ -101,4 +85,3 @@ test('should insert immutable docs', t => {
   t.assert(Object.isFrozen(updated))
   collection.remove(1) // emits 'deleted' event
 })
-```
