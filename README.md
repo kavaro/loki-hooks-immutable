@@ -4,7 +4,8 @@ A loki-hooks factory function that turns a loki collection into a collection wit
 Quering the collection will return immutable documents. Insert/update and remove return immutable documents.
 When the immer and patches options are enabled, then the insert and update methods accept immer drafts (created
 with createDraft) as input. The insert and update methods will then emit insertEvent/updateEvent events with the 
-document and the immer patches as arguments.
+document and the immer patches as arguments. The insertEvent/updateEvent and deleteEvent can be disable by setting
+its name to '' in the options.
 
 # Usage
 

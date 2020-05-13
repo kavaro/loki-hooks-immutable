@@ -41,11 +41,11 @@ const { isArray } = Array
  * Hook factory function that freezes documents of a collection when the production options is false.
  * When an immer draft is passed as doc to the insert/update methods, then finishDraft is called on the draft before the
  * insert/update is performed.
+ * When the insertEvent/updateEvent/deleteEvent names are set then events are emitted with the immutable doc as the first argument.
+ * By default the event names are defined as 'inserted', 'updated' and 'deleted' and hence emitted.
+ * To disable an event, set its event name to ''.
  * When immer and patch are enabled, then patches are generated with finishDraft.
- * The patches are available via the second argument on the insertEvent and updateEvent listeners.
- * The insertEvent/updateEvent/deleteEvent call the listener with the immutable doc as the first argument
- * To enable insertEvent/updateEvent/deleteEvent events, their respective options must be set to the name of the event.
- * When the length of the name of the event is 0 then the event is suppressed. 
+ * An object with patches and reversePatches is then available via the second argument of the emitted insertEvent/updateEvent.
  * @param methods 
  * @param options 
  */
@@ -55,9 +55,9 @@ export function immutable(methods: HookMethods, options: TImmutableOptions): TCr
     immer: null,
     patches: false,
     production: false,
-    insertEvent: '',
-    updateEvent: '',
-    deleteEvent: '',
+    insertEvent: 'inserted',
+    updateEvent: 'updated',
+    deleteEvent: 'deleted',
     ...options
   }
 
@@ -112,13 +112,8 @@ export function immutable(methods: HookMethods, options: TImmutableOptions): TCr
   }
 
   function deepFreezeInsert(this: Collection<any>, doc: any, _: any[], contextPatches: any): any {
-    if (isArray(doc)) {
-      doc = doc.map(obj => deepFreeze(obj))
-      insertEvent && this.emit(insertEvent, doc, contextPatches)
-    } else {
-      doc = deepFreeze(doc)
-      insertEvent && this.emit(insertEvent, doc, contextPatches)
-    }
+    doc = isArray(doc) ? doc.map(obj => deepFreeze(obj)) : deepFreeze(doc)
+    insertEvent && this.emit(insertEvent, doc, contextPatches)
     return doc
   }
 
@@ -169,12 +164,13 @@ export function immutable(methods: HookMethods, options: TImmutableOptions): TCr
     const { events } = collection
     const eventNames = [insertEvent, updateEvent, deleteEvent]
     eventNames.forEach(eventName => {
+      /* istanbul ignore else */
       if (eventName && !events[eventName]) {
         events[eventName] = []
       }
     })
     const deleted = (doc: any) => deleteEvent && collection.emit(deleteEvent, deepFreeze({ ...doc }))
-    collection.addListener('delete', deleted)  
+    collection.addListener('delete', deleted)
     if (!production) {
       collection.data.forEach(deepFreeze)
     }
