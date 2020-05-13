@@ -71,7 +71,8 @@
 					Quering the collection will return immutable documents. Insert/update and remove return immutable documents.
 					When the immer and patches options are enabled, then the insert and update methods accept immer drafts (created
 					with createDraft) as input. The insert and update methods will then emit insertEvent/updateEvent events with the
-				document and the immer patches as arguments.</p>
+					document and the immer patches as arguments. The insertEvent/updateEvent and deleteEvent can be disable by setting
+				its name to &#39;&#39; in the options.</p>
 				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
 					<h1>Usage</h1>
 				</a>
