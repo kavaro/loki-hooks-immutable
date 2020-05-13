@@ -1,6 +1,6 @@
 {
   "name": "loki-hooks-immutable",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "A hook for loki-hooks that converts a lokijs collection into a collection with immutable documents",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
