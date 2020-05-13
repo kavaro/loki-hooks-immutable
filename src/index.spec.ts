@@ -1,11 +1,10 @@
 import test from 'ava'
 import sinon from 'sinon'
 import Loki from 'lokijs'
-import * as immer from 'immer'
+import { createDraft } from 'immer'
 import { Hooks } from 'member-hooks'
 import { createHooksLoki } from 'loki-hooks'
 import { immutable } from '.'
-
 
 const dbHooks = new Hooks()
 const collectionHooks = new Hooks()
@@ -20,8 +19,7 @@ test('should make docs immutable, accept immer draft and emit immer patches', t 
   const collection = db.addCollection('collection', {
     hooks: {
       config: [['immutable', {
-        immer, // when set, document can be inserted and updated with an immer draft
-        patches: true, // when the immer options is set and patches is true, then generate immer patches
+        patches: true, // when patches is true, then generate immer patches
         insertEvent: 'inserted', // emit('inserted', doc, immer patches of changes made by app on immer draft)
         updateEvent: 'updated',  // emit('updated', doc, immer patches of changes made by app on immer draft)
         deleteEvent: 'deleted',  // emit('deleted', doc)
@@ -83,7 +81,7 @@ test('should make docs immutable, accept immer draft and emit immer patches', t 
   t.assert(insertedSpy.calledOnce)
   const inserted = collection.get(1)
   t.assert(Object.isFrozen(inserted))
-  const draft = immer.createDraft(inserted)
+  const draft = createDraft(inserted)
   draft.name = 'name1'
   collection.update(draft) // emits 'updated' event
   t.assert(updatedSpy.calledOnce)

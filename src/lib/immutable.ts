@@ -1,3 +1,4 @@
+import { enablePatches, isDraft, createDraft, finishDraft } from 'immer'
 import { HookMethods, TObj, TCreate } from 'member-hooks'
 
 export interface TPatch {
@@ -8,16 +9,8 @@ export interface TPatch {
 
 export type TPatchesCallback = (patches: TPatch[], reversePatches: TPatch[]) => void
 
-export interface TImmer {
-  isDraft: (value: any) => boolean
-  createDraft: (value: any) => any
-  finishDraft: (value: any, fn?: TPatchesCallback) => any
-  enablePatches: () => void
-}
-
 export interface TImmutableOptions {
   priority?: number
-  immer?: TImmer
   patches?: boolean
   production?: boolean
   insertEvent?: string
@@ -44,15 +37,14 @@ const { isArray } = Array
  * When the insertEvent/updateEvent/deleteEvent names are set then events are emitted with the immutable doc as the first argument.
  * By default the event names are defined as 'inserted', 'updated' and 'deleted' and hence emitted.
  * To disable an event, set its event name to ''.
- * When immer and patch are enabled, then patches are generated with finishDraft.
+ * When patches are enabled, then patches are generated with finishDraft.
  * An object with patches and reversePatches is then available via the second argument of the emitted insertEvent/updateEvent.
  * @param methods 
  * @param options 
  */
 export function immutable(methods: HookMethods, options: TImmutableOptions): TCreate {
-  const { priority, immer, patches, production, insertEvent, updateEvent, deleteEvent } = {
+  const { priority, patches, production, insertEvent, updateEvent, deleteEvent } = {
     priority: -1000000,
-    immer: null,
     patches: false,
     production: false,
     insertEvent: 'inserted',
@@ -62,14 +54,13 @@ export function immutable(methods: HookMethods, options: TImmutableOptions): TCr
   }
 
   function unfreezeDoc(doc: any, context: TPatchReversePatch[]): any {
-    if (immer) {
-      if (!immer.isDraft(doc)) {
-        doc = Object.assign(immer.createDraft({}), doc)
-      }
-      doc = patches
-        ? immer.finishDraft(doc, (docPatches, reverseDocPatches) => context.push({ patches: docPatches, reversePatches: reverseDocPatches }))
-        : immer.finishDraft(doc)
+    if (!isDraft(doc)) {
+      doc = Object.assign(createDraft({}), doc)
     }
+    doc = patches
+      ? finishDraft(doc, (docPatches, reverseDocPatches) => context.push({ patches: docPatches, reversePatches: reverseDocPatches }))
+      : finishDraft(doc)
+    /* istanbul ignore else */
     if (doc && Object.isFrozen(doc)) {
       doc = { ...doc }
     }
@@ -158,8 +149,8 @@ export function immutable(methods: HookMethods, options: TImmutableOptions): TCr
   methods.after('remove', priority, deepFreezeRemove)
 
   return (collection: Collection<any>) => {
-    if (immer && patches) {
-      immer.enablePatches()
+    if (patches) {
+      enablePatches()
     }
     const { events } = collection
     const eventNames = [insertEvent, updateEvent, deleteEvent]
