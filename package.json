@@ -51,8 +51,8 @@
   },
   "dependencies": {
     "immer": "^6.0.5",
-    "loki-hooks": "^2.0.11",
-    "member-hooks": "^4.0.0"
+    "loki-hooks": "^2.0.12",
+    "member-hooks": "^4.0.1"
   },
   "devDependencies": {
     "@bitjson/npm-scripts-info": "^1.0.0",
